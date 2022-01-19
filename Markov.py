@@ -27,7 +27,7 @@ class Sampler:
   # Metropolis step (Metropolis kernel)
   # x <- current value 
   # y <- new value proposed by q(y|x) or q(x,y) written in another way
-  def metropolis(self,x,y):
+  def metropolis_step(self,x,y):
     alpha=min(0,jnp.log(self.p(y))+jnp.log(self.q(y,x))-jnp.log(self.p(x))-jnp.log(self.q(x,y)))
     u=jnp.log(np.random.uniform(0,1,1)[0])
     
@@ -38,7 +38,7 @@ class Sampler:
 
   def metropolis(self,x):
     y=self.q_sample(x)
-    y=self.metropolis(x,y)
+    y=self.metropolis_step(x,y)
     return y
 
   def langevin(self,x):
