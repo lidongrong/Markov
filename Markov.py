@@ -1,17 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jan 19 18:10:40 2022
-
-@author: lidon
-"""
-
-import jax
-import jax.numpy as jnp
-import numpy as np
-import scipy.stats as stats
-import time
-import scipy
-
 key=jax.random.PRNGKey(42)
 
 class Sampler:
@@ -26,7 +12,11 @@ class Sampler:
     self.p=p
     self.q=q
     self.q_sample=q_sample
-    self.key=jax.random.PRNGKey(42)
+    self.key=jax.random.PRNGKey(int(time.time()))
+    # print report every 10 steps
+    self.report_step=10
+    # step size of gradient-based Monte Carlo
+    self.step_size=0.1
     #self.log_p=jnp.log(self.p)
 
   # vectorize pdf evaluation
@@ -99,9 +89,18 @@ class Sampler:
   # Langevin kernel, used to differ from M-H kernel
   def langevin_kernel(self,x):
     # step size
-    eps=0.1
+    eps=self.step_size
     grad_log_p=jax.grad(self.log_p)
     y=x+eps*grad_log_p(x)+jnp.sqrt(2*eps)*np.random.normal(0.,1.,len(x))
+    return y
+  
+  # Parallel langevin kernel
+  def para_langevin_kernel(self,x):
+    eps=self.step_size
+    grad_log_p=jax.grad(self.log_p)
+    v_grad_log_p=jax.vmap(grad_log_p)
+    # Note that here we generate normal by cpu, only log function is evaluated on GPU
+    y=x+eps*v_grad_log_p(x)+jnp.sqrt(2*eps)*np.random.normal(0,1,x.shape)
     return y
 
 
@@ -124,7 +123,10 @@ class Sampler:
       output.append(kernel(x))
       # end time
       end=time.time()
-      print(end-start)
+      #print(end-start)
+      if i%self.report_step==0:
+        print(f'The {i}-th iteration.')
+        print(f'Used time: {end-start} seconds.')
     output=jnp.array(output)
     return output
 
