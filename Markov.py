@@ -1,3 +1,9 @@
+import jax
+import jax.numpy as jnp
+import numpy as np
+import scipy.stats as stats
+import time
+import scipy
 key=jax.random.PRNGKey(42)
 
 class Sampler:
@@ -94,7 +100,6 @@ class Sampler:
     y=x+eps*grad_log_p(x)+jnp.sqrt(2*eps)*np.random.normal(0.,1.,len(x))
     return y
   
-  # Parallel langevin kernel
   def para_langevin_kernel(self,x):
     eps=self.step_size
     grad_log_p=jax.grad(self.log_p)
@@ -129,4 +134,3 @@ class Sampler:
         print(f'Used time: {end-start} seconds.')
     output=jnp.array(output)
     return output
-
